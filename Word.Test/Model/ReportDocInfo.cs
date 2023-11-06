@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace GDMK.CAH.Client.Report.Model
+namespace Word.Test.Model
 {
-    public class ReportDocInfo 
+    public class ReportDocInfo
     {
         public long Id { get; set; }
 

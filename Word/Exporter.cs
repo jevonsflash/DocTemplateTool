@@ -1,6 +1,10 @@
 ﻿using Flurl.Http;
+using NPOI.POIFS.Crypt;
+using NPOI.SS.Formula.Functions;
 using NPOI.XWPF.UserModel;
+using System.Collections;
 using System.Reflection;
+using System.Reflection.Metadata;
 using System.Text.RegularExpressions;
 using Word.Helper;
 
@@ -26,7 +30,7 @@ namespace Word
                     {
                         foreach (var para in cell.Paragraphs)
                         {
-                            ReplaceKeyObjetAsync(para, data, func);
+                            ReplaceKeyObjetAsync(para, data, func, cell);
                         }
                     }
                 }
@@ -45,12 +49,12 @@ namespace Word
         }
 
 
-        public static XWPFDocument ExportDocxByDictionary(Stream templateStream, Dictionary<string, string> data, Func<string, string> func = null)
+        public static XWPFDocument ExportDocxByDictionary(Stream templateStream, Dictionary<string, object> data, Func<string, string> func = null)
         {
             var doc = new XWPFDocument(templateStream);
             foreach (var para in doc.Paragraphs)
             {
-                ReplaceKeyObjetAsync(para, data, func);
+                ReplaceKeyDictionaryAsync(para, data, func);
             }
 
             foreach (var table in doc.Tables)
@@ -71,7 +75,7 @@ namespace Word
         }
 
 
-        public static XWPFDocument ExportDocxByDictionary(string templateFilePath, Dictionary<string, string> data, Func<string, string> func = null)
+        public static XWPFDocument ExportDocxByDictionary(string templateFilePath, Dictionary<string, object> data, Func<string, string> func = null)
         {
             using (var fileStream = new FileStream(templateFilePath, FileMode.Open))
             {
@@ -81,68 +85,145 @@ namespace Word
 
 
 
-        private static async Task ReplaceKeyDictionaryAsync(XWPFParagraph para, Dictionary<string, string> data, Func<string, string> func)
+        private static async Task ReplaceKeyDictionaryAsync(XWPFParagraph para, Dictionary<string, object> data, Func<string, string> func, XWPFTableCell cell = null)
         {
             string text = "";
-
 
             foreach (var run in para.Runs)
             {
                 text = run.ToString();
                 foreach (var p in data.Keys)
                 {
-                    string key = $"${p}$";
-                    if (text.Contains(key))
+                    //string key = $"${p.Name}$";
+                    var textReg = new Regex(@"^\$" + p + @"(\[\w+\])?\$$");
+                    var assetReg = new Regex(@"^#" + p + @"(\[\d+,\d+\])?#$");
+                    var sizeReg = new Regex(@"\[\d+,\d+\]");
+
+                    if (textReg.IsMatch(text))
                     {
                         try
                         {
-                            text = text.Replace(key, data[key]);
+                            var value = data[p];
+                            if (value is ICollection)
+                            {
+                                if (cell == null)
+                                {
+                                    var document = run.Document;
+                                    var position = document.GetPosOfParagraph(para);
+                                    foreach (var firstXwpfTable in document.Tables)
+                                    {
+                                        var currentTablePos = document.GetPosOfTable(firstXwpfTable);
+                                        if (currentTablePos == position + 1)
+                                        {
+                                            foreach (var valueItem in value as ICollection)
+                                            {
+                                                if (valueItem != null)
+                                                {
+
+                                                    var currentRow = firstXwpfTable.CreateRow();
+                                                    Type tv = valueItem.GetType();
+                                                    PropertyInfo[] piv = tv.GetProperties();
+                                                    var headers = firstXwpfTable.GetRow(1).GetTableCells();
+                                                    int currenthIndex = -1;
+                                                    foreach (PropertyInfo pv in piv)
+                                                    {
+                                                        var headerReg = new Regex(@"^\$" + pv.Name + @"(\[\w+\])?\$$");
+                                                        var currenth = headers.FirstOrDefault(c => headerReg.IsMatch(c.GetText().Trim()));
+                                                        if (currenth != null)
+                                                        {
+                                                            currenthIndex = headers.IndexOf(currenth);
+                                                            var valuep = pv.GetValue(valueItem, null);
+
+                                                            currentRow.GetCell(currenthIndex).SetParagraph(NpoiWordParagraphTextStyleHelper._.SetTableParagraphInstanceSetting(document, firstXwpfTable, GetStringValue(valuep), ParagraphAlignment.CENTER, 22, true));
+
+
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                            }
+                            else
+                            {
+
+                                text = textReg.Replace(text, GetStringValue(value));
+
+                            }
                         }
                         catch (Exception ex)
                         {
-                            text = text.Replace(key, "");
+                            text = "";
                         }
                     }
-                    else if (text.Contains($@"#{p}#"))
+                    else if (assetReg.IsMatch(text))
                     {
-                        text = text.Replace($@"#{p}#", "");
+                        var width = 5300000;
+                        var height = 2500000;
+                        var sizeMatch = sizeReg.Match(text);
+                        if (sizeMatch.Success)
+                        {
+                            try
+                            {
+                                var w = sizeMatch.Value.Split(',')[0].TrimStart('[');
+                                var h = sizeMatch.Value.Split(',')[1].TrimEnd(']');
+                                width = int.Parse(w) * 9525;
+                                height = int.Parse(h) * 9525;
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine("解析图片尺寸错误：" + ex);
+                            }
+
+                        }
                         try
                         {
-                            var filePath = data[key];
+                            var filePath = data[p] as string;
                             filePath = func?.Invoke(filePath);
-
                             if (string.IsNullOrEmpty(filePath))
                             {
                                 continue;
                             }
-
                             if (File.Exists(filePath))
                             {
                                 using (var fileStream = new FileStream(filePath.ToString(), FileMode.Open, FileAccess.Read))
                                 {
-                                    text = text.Replace($@"#{p}#", filePath.ToString());
-                                    run.AddPicture(fileStream, (int)GetPictureType(filePath), $@"{p}", 5300000, 2500000);
+                                    text = "";
+                                    run.AddPicture(fileStream, (int)GetPictureType(filePath), $@"{p}", width, height);
+                                    NPOI.OpenXmlFormats.Dml.WordProcessing.CT_Inline inline = run.GetCTR().GetDrawingList()[0].inline[0];
+                                    var id = (uint)para.Runs.IndexOf(run);
+                                    inline.docPr.id = id;
                                 }
                             }
                             else
                             {
+
                                 if (CommonHelper.IsBase64(filePath.ToString()))
                                 {
                                     var fileContent = Convert.FromBase64String(filePath.ToString());
                                     using (var fileStream = new MemoryStream(fileContent))
                                     {
-                                        text = text.Replace($@"#{p}#", filePath.ToString());
-                                        run.AddPicture(fileStream, (int)GetPictureType(filePath), $@"{p}", 5300000, 2500000);
+                                        text = "";
+                                        run.AddPicture(fileStream, (int)GetPictureType(filePath), $@"{p}", width, height);
+                                        NPOI.OpenXmlFormats.Dml.WordProcessing.CT_Inline inline = run.GetCTR().GetDrawingList()[0].inline[0];
+                                        var id = (uint)para.Runs.IndexOf(run);
+                                        inline.docPr.id = id;
                                     }
                                 }
                                 else
                                 {
                                     using (var fileStream = await filePath.ToString().GetStreamAsync())
                                     {
-                                        text = text.Replace($@"#{p}#", filePath.ToString());
-                                        run.AddPicture(fileStream, (int)GetPictureType(filePath), $@"{p}", 5300000, 2500000);
+                                        text = "";
+                                        run.AddPicture(fileStream, (int)GetPictureType(filePath), $@"{p}", width, height);
+                                        NPOI.OpenXmlFormats.Dml.WordProcessing.CT_Inline inline = run.GetCTR().GetDrawingList()[0].inline[0];
+                                        var id = (uint)para.Runs.IndexOf(run);
+                                        inline.docPr.id = id;
                                     }
                                 }
+
 
                             }
                         }
@@ -150,9 +231,9 @@ namespace Word
                         {
                             Console.WriteLine(e);
                         }
+
                     }
                 }
-
                 if (text.Contains('\n'))
                 {
                     run.SetText(string.Empty, 0);
@@ -173,7 +254,7 @@ namespace Word
         }
 
 
-        private static async Task ReplaceKeyObjetAsync(XWPFParagraph para, object model, Func<string, string> func)
+        private static async Task ReplaceKeyObjetAsync(XWPFParagraph para, object model, Func<string, string> func, XWPFTableCell cell = null)
         {
             string text = "";
             Type t = model.GetType();
@@ -184,50 +265,88 @@ namespace Word
                 text = run.ToString();
                 foreach (PropertyInfo p in pi)
                 {
-                    string key = $"${p.Name}$";
-                    var reg = new Regex(@"^#" + p.Name + @"\[\d+,\d+\]#$");
+                    //string key = $"${p.Name}$";
+                    var textReg = new Regex(@"^\$" + p.Name + @"(\[\w+\])?\$$");
+                    var assetReg = new Regex(@"^#" + p.Name + @"(\[\d+,\d+\])?#$");
                     var sizeReg = new Regex(@"\[\d+,\d+\]");
 
-                    if (text.Contains(key))
+                    if (textReg.IsMatch(text))
                     {
                         try
                         {
-                            text = text.Replace(key, p.GetValue(model, null).ToString());
-                        }
-                        catch (Exception ex)
-                        {
-                            text = text.Replace(key, "");
-                        }
-                    }
-                    else
-                    {
-                        var width = 5300000;
-                        var height = 2500000;
-                        if (text.Contains($@"#{p.Name}#"))
-                        {
-                        }
-                        else if (reg.IsMatch(text))
-                        {
-                            var sizeMatch = sizeReg.Match(text);
-                            if (sizeMatch.Success)
+                            var value = p.GetValue(model, null);
+                            if (value is ICollection)
                             {
-                                try
+                                if (cell == null)
                                 {
-                                    var w = sizeMatch.Value.Split(',')[0].TrimStart('[');
-                                    var h = sizeMatch.Value.Split(',')[1].TrimEnd(']');
-                                    width = int.Parse(w) * 9525;
-                                    height = int.Parse(h) * 9525;
-                                }
-                                catch (Exception ex)
-                                {
-                                    Console.WriteLine("解析图片尺寸错误：" + ex);
+                                    var document = run.Document;
+                                    var position = document.GetPosOfParagraph(para);
+                                    foreach (var firstXwpfTable in document.Tables)
+                                    {
+                                        var currentTablePos = document.GetPosOfTable(firstXwpfTable);
+                                        if (currentTablePos == position + 1)
+                                        {
+                                            foreach (var valueItem in value as ICollection)
+                                            {
+                                                if (valueItem != null)
+                                                {
+
+                                                    var currentRow = firstXwpfTable.CreateRow();
+                                                    Type tv = valueItem.GetType();
+                                                    PropertyInfo[] piv = tv.GetProperties();
+                                                    var headers = firstXwpfTable.GetRow(1).GetTableCells();
+                                                    int currenthIndex = -1;
+                                                    foreach (PropertyInfo pv in piv)
+                                                    {
+                                                        var headerReg = new Regex(@"^\$" + pv.Name + @"(\[\w+\])?\$$");
+                                                        var currenth = headers.FirstOrDefault(c => headerReg.IsMatch(c.GetText().Trim()));
+                                                        if (currenth != null)
+                                                        {
+                                                            currenthIndex = headers.IndexOf(currenth);
+                                                            var valuep = pv.GetValue(valueItem, null);
+
+                                                            currentRow.GetCell(currenthIndex).SetParagraph(NpoiWordParagraphTextStyleHelper._.SetTableParagraphInstanceSetting(document, firstXwpfTable, GetStringValue(valuep), ParagraphAlignment.CENTER, 22, true));
+
+
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
 
                             }
+                            else
+                            {
+                                text = textReg.Replace(text, GetStringValue(value));
+
+                            }
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            continue;
+                            text = "";
+                        }
+                    }
+                    else if (assetReg.IsMatch(text))
+                    {
+                        var width = 5300000;
+                        var height = 2500000;
+                        var sizeMatch = sizeReg.Match(text);
+                        if (sizeMatch.Success)
+                        {
+                            try
+                            {
+                                var w = sizeMatch.Value.Split(',')[0].TrimStart('[');
+                                var h = sizeMatch.Value.Split(',')[1].TrimEnd(']');
+                                width = int.Parse(w) * 9525;
+                                height = int.Parse(h) * 9525;
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine("解析图片尺寸错误：" + ex);
+                            }
+
                         }
                         try
                         {
@@ -339,5 +458,26 @@ namespace Word
                 return (PictureType)result;
             }
         }
+
+        private static string? GetStringValue(object value)
+        {
+            if (value is DateTime)
+            {
+                return ((DateTime)value).ToString("yyyy-MM-dd hh:mm");
+
+            }
+            else if (value is double)
+            {
+                return ((double)value).ToString("0.00");
+            }
+            else if (value is float)
+            {
+                return ((float)value).ToString("0.00");
+            }
+
+            return value.ToString();
+
+        }
+
     }
 }
