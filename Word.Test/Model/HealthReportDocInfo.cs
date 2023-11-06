@@ -21,11 +21,18 @@ namespace Word.Test.Model
 
         public int BloodGlucoseTestPassCount { get; set; }
         public int BloodPressureTestPassCount { get; set; }
-        public int ECGTestMemberPassCount { get; set; }
+        public int ECGTestPassCount { get; set; }
+
+        public int BloodGlucoseTestFailedCount => BloodGlucoseTestMemberCount - BloodGlucoseTestPassCount;
+        public int BloodPressureTestFailedCount => BloodPressureTestMemberCount - BloodPressureTestPassCount;
+        public int ECGTestFailedCount => ECGTestMemberCount - ECGTestPassCount;
 
         public double BloodGlucoseTestPassRatio => BloodGlucoseTestPassCount / BloodGlucoseTestMemberCount;
         public double BloodPressureTestPassRatio => BloodPressureTestPassCount / BloodPressureTestMemberCount;
-        public double ECGTestMemberPassRatio => ECGTestMemberPassCount / ECGTestMemberCount;
+        public double ECGTestPassRatio => ECGTestPassCount / ECGTestMemberCount;
+        public List<AnalysisList> BloodPressureAnalysis { get; set; }
+        public List<AnalysisList> BloodGlucoseAnalysis { get; set; }
+        public List<AnalysisList> ECGAnalysis { get; set; }
         public List<DetailList> BloodPressureList { get; set; }
         public List<DetailList> BloodGlucoseList { get; set; }
         public List<DetailList> ECGList { get; set; }

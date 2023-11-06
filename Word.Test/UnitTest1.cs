@@ -124,18 +124,124 @@ namespace Word.Test
 
             docinfo.ClientName = "XX科技股份有限公司";
             docinfo.Title = "健康企业员工健康管理周报";
-            docinfo.BloodPressureList = new List<DetailList> { new DetailList() {
+            docinfo.TimeSpan = "2023年10月19日-10月29日";
+            docinfo.Count1 = 2; docinfo.Count2 = 3;
+            docinfo.TotalMemberCount = 60;
+            docinfo.BloodPressureTestMemberCount = 42;
+            docinfo.BloodGlucoseTestMemberCount = 43;
+            docinfo.ECGTestMemberCount = 30;
+            docinfo.BloodPressureAnalysis = new List<AnalysisList>()
+            {
+                 new AnalysisList()
+                 {
 
+                      Dept="技术部", Count=8
+                 },
+                  new AnalysisList()
+                 {
+
+                      Dept="总经办", Count=1
+                 },
+                   new AnalysisList()
+                 {
+
+                      Dept="客户部", Count=2
+                 }
+
+
+            };
+
+            docinfo.BloodGlucoseAnalysis = new List<AnalysisList>()
+            {
+                 new AnalysisList()
+                 {
+
+                      Dept="技术部", Count=4
+                 },
+                  new AnalysisList()
+                 {
+
+                      Dept="总经办", Count=1
+                 },
+                   new AnalysisList()
+                 {
+
+                      Dept="客户部", Count=1
+                 }
+
+
+            };
+
+            docinfo.ECGAnalysis = new List<AnalysisList>()
+            {
+                 new AnalysisList()
+                 {
+
+                      Dept="技术部", Count=4
+                 },
+                  new AnalysisList()
+                 {
+
+                      Dept="总经办", Count=1
+                 },
+                   new AnalysisList()
+                 {
+
+                      Dept="客户部", Count=1
+                 }
+
+
+            };
+
+            docinfo.BloodPressureList = new List<DetailList> { new DetailList() {
             Dept="技术部",
              Name="张三",
-             Value="144/86",
+             Value="144/66",
              Result="↑"
             },
             new DetailList() {
             Dept="技术部",
              Name="李四",
-             Value="144/86",
+             Value="150/86",
              Result="↑"
+            },
+             new DetailList() {
+            Dept="技术部",
+             Name="张伟",
+             Value="149/86",
+             Result="↑"
+            },
+            new DetailList() {
+            Dept="技术部",
+             Name="李青",
+             Value="128/92",
+             Result="↑"
+            }
+            };
+            docinfo.BloodGlucoseList = new List<DetailList> { new DetailList() {
+            Dept="技术部",
+             Name="张伟",
+             Value="6.3",
+             Result="↑"
+            },
+            new DetailList() {
+            Dept="技术部",
+             Name="王芳",
+             Value="6.5",
+             Result="↑"
+            }
+            };
+            docinfo.ECGList = new List<DetailList> { new DetailList() {
+            Dept="技术部",
+             Name="张敏",
+             Value="122",
+             Result="↑"
+            },
+            new DetailList() {
+            Dept="技术部",
+             Name="陈婷",
+             Value="55",
+             Result="↓"
             }
             };
             return docinfo;
