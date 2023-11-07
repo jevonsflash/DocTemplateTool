@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+	  <Version>0.1.1</Version>
+	  <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
+	  <ImplicitUsings>enable</ImplicitUsings>
+	  <Authors>LinXiao</Authors>
+	  <Company>MatoApp</Company>
+	  <Copyright>Copyright ©  2023</Copyright>
+	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
+	  <RepositoryUrl>https://github.com/jevonsflash/DocTemplateTool</RepositoryUrl>
+	  <Description>Specify a template to generate word or Pdf files</Description>
+	  <PackageReadmeFile>README.md</PackageReadmeFile>
+	  <Nullable>enable</Nullable>
+  </PropertyGroup>
+	<ItemGroup>
+		<None Include="..\README.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
+
+
+	<ItemGroup>
+    <PackageReference Include="Flurl.Http" Version="3.2.4" />
+    <PackageReference Include="NPOI" Version="2.6.2" />
+    <PackageReference Include="sautinsoft.document" Version="5.6.8.16" />
+    <PackageReference Include="sautinsoft.useoffice" Version="5.1.2.24" />
+  </ItemGroup>
+
+</Project>

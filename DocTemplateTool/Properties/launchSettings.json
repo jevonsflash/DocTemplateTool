@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "DocTemplateTool": {
+      "commandName": "Project",
+      "hotReloadEnabled": true,
+      "nativeDebugging": false
+    }
+  }
+}
