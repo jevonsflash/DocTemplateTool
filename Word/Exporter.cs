@@ -49,7 +49,7 @@ namespace Word
         }
 
 
-        public static XWPFDocument ExportDocxByDictionary(Stream templateStream, Dictionary<string, object> data, Func<string, string> func = null)
+        public static XWPFDocument ExportDocxByDictionary(Stream templateStream, IDictionary<string, object> data, Func<string, string> func = null)
         {
             var doc = new XWPFDocument(templateStream);
             foreach (var para in doc.Paragraphs)
@@ -75,7 +75,7 @@ namespace Word
         }
 
 
-        public static XWPFDocument ExportDocxByDictionary(string templateFilePath, Dictionary<string, object> data, Func<string, string> func = null)
+        public static XWPFDocument ExportDocxByDictionary(string templateFilePath, IDictionary<string, object> data, Func<string, string> func = null)
         {
             using (var fileStream = new FileStream(templateFilePath, FileMode.Open))
             {
@@ -85,10 +85,11 @@ namespace Word
 
 
 
-        private static async Task ReplaceKeyDictionaryAsync(XWPFParagraph para, Dictionary<string, object> data, Func<string, string> func, XWPFTableCell cell = null)
+        private static async Task ReplaceKeyDictionaryAsync(XWPFParagraph para, IDictionary<string, object> data, Func<string, string> func, XWPFTableCell cell = null)
         {
             string text = "";
-
+            var sizeReg = new Regex(@"\[\d+,\d+\]");
+            var paramsReg = new Regex(@"\[\d+\]");
             foreach (var run in para.Runs)
             {
                 text = run.ToString();
@@ -97,28 +98,36 @@ namespace Word
                     //string key = $"${p.Name}$";
                     var textReg = new Regex(@"\$" + p + @"(\[\w+\])?\$");
                     var assetReg = new Regex(@"#" + p + @"(\[\d+,\d+\])?#");
-                    var sizeReg = new Regex(@"\[\d+,\d+\]");
+
 
                     if (textReg.IsMatch(text))
                     {
                         try
                         {
                             var value = data[p];
-                            if (value is ICollection)
+                            if (value is IEnumerable && value is not string)
                             {
                                 if (cell == null)
                                 {
-                                    if (value is ICollection<Dictionary<string, object>>)
+                                    var startRow = 1;
+                                    var paramsMatch = paramsReg.Match(text);
+                                    if (paramsMatch.Success)
                                     {
-                                        ReplaceTableCellDictionary(para, run, value as ICollection<Dictionary<string, object>>);
+                                        startRow = int.Parse(paramsMatch.Value.TrimStart('[').TrimEnd(']'));
+                                    }
+                                    if (value is IEnumerable<Dictionary<string, object>>)
+                                    {
+
+                                        ReplaceTableCellDictionary(para, run, value as IEnumerable<Dictionary<string, object>>, startRow);
 
                                     }
                                     else
                                     {
-                                        ReplaceTableCellObject(para, run, value as ICollection);
+                                        ReplaceTableCellObject(para, run, value as IEnumerable, startRow);
 
                                     }
                                 }
+                                text = "";
 
                             }
 
@@ -235,6 +244,8 @@ namespace Word
             string text = "";
             Type t = model.GetType();
             PropertyInfo[] pi = t.GetProperties();
+            var sizeReg = new Regex(@"\[\d+,\d+\]");
+            var paramsReg = new Regex(@"\[\d+\]");
 
             foreach (var run in para.Runs)
             {
@@ -244,29 +255,36 @@ namespace Word
                     //string key = $"${p.Name}$";
                     var textReg = new Regex(@"\$" + p.Name + @"(\[\w+\])?\$");
                     var assetReg = new Regex(@"#" + p.Name + @"(\[\d+,\d+\])?#");
-                    var sizeReg = new Regex(@"\[\d+,\d+\]");
 
                     if (textReg.IsMatch(text))
                     {
                         try
                         {
                             var value = p.GetValue(model, null);
-                            if (value is ICollection)
+                            if (value is IEnumerable && value is not string)
                             {
                                 if (cell == null)
                                 {
-                                    if (value is ICollection<Dictionary<string, object>>)
+                                    var startRow = 1;
+                                    var paramsMatch = paramsReg.Match(text);
+                                    if (paramsMatch.Success)
                                     {
-                                        ReplaceTableCellDictionary(para, run, value as ICollection<Dictionary<string, object>>);
+                                        startRow = int.Parse(paramsMatch.Value.TrimStart('[').TrimEnd(']'));
+                                    }
+                                    if (value is IEnumerable<Dictionary<string, object>>)
+                                    {
+
+                                        ReplaceTableCellDictionary(para, run, value as IEnumerable<Dictionary<string, object>>, startRow);
 
                                     }
+
                                     else
                                     {
-                                        ReplaceTableCellObject(para, run, value as ICollection);
+                                        ReplaceTableCellObject(para, run, value as IEnumerable, startRow);
 
                                     }
                                 }
-
+                                text = "";
                             }
                             else
                             {
@@ -374,7 +392,7 @@ namespace Word
             }
         }
 
-        private static void ReplaceTableCellDictionary(XWPFParagraph para, XWPFRun? run, ICollection<Dictionary<string, object>> data)
+        private static void ReplaceTableCellDictionary(XWPFParagraph para, XWPFRun? run, IEnumerable<Dictionary<string, object>> data, int startRow)
         {
             var document = run.Document;
             var position = document.GetPosOfParagraph(para);
@@ -383,17 +401,19 @@ namespace Word
                 var currentTablePos = document.GetPosOfTable(firstXwpfTable);
                 if (currentTablePos == position + 1)
                 {
+                    var index = 1;
                     foreach (var valueItem in data)
                     {
                         if (valueItem != null)
                         {
+                            var currentRow = firstXwpfTable.InsertNewTableRow(startRow + index);
 
-                            var currentRow = firstXwpfTable.CreateRow();
-                            
-
-                            var headers = firstXwpfTable.GetRow(1).GetTableCells();
+                            var headers = firstXwpfTable.GetRow(startRow).GetTableCells();
+                            foreach (var item in headers)
+                            {
+                                currentRow.CreateCell();
+                            }
                             int currenthIndex = -1;
-
 
                             foreach (var pv in valueItem.Keys)
                             {
@@ -410,14 +430,15 @@ namespace Word
                                 }
                             }
                         }
+                        index++;
                     }
-                    firstXwpfTable.RemoveRow(1);
+                    firstXwpfTable.RemoveRow(startRow);
 
                 }
             }
         }
 
-        private static void ReplaceTableCellObject(XWPFParagraph para, XWPFRun run, ICollection value)
+        private static void ReplaceTableCellObject(XWPFParagraph para, XWPFRun run, IEnumerable value, int startRow)
         {
             var document = run.Document;
             var position = document.GetPosOfParagraph(para);
@@ -426,33 +447,75 @@ namespace Word
                 var currentTablePos = document.GetPosOfTable(firstXwpfTable);
                 if (currentTablePos == position + 1)
                 {
+                    var index = 1;
+
+
                     foreach (var valueItem in value)
                     {
                         if (valueItem != null)
                         {
-
-                            var currentRow = firstXwpfTable.CreateRow();
-                            Type tv = valueItem.GetType();
-                            PropertyInfo[] piv = tv.GetProperties();
-                            var headers = firstXwpfTable.GetRow(1).GetTableCells();
-                            int currenthIndex = -1;
-                            foreach (PropertyInfo pv in piv)
+                            if (valueItem is IDictionary<string, object>)
                             {
-                                var headerReg = new Regex(@"\$" + pv.Name + @"(\[\w+\])?\$");
-                                var currenth = headers.FirstOrDefault(c => headerReg.IsMatch(c.GetText().Trim()));
-                                if (currenth != null)
+                                var currentRow = firstXwpfTable.InsertNewTableRow(startRow + index);
+
+                                var headers = firstXwpfTable.GetRow(startRow).GetTableCells();
+                                foreach (var item in headers)
                                 {
-                                    currenthIndex = headers.IndexOf(currenth);
-                                    var valuep = pv.GetValue(valueItem, null);
+                                    currentRow.CreateCell();
+                                }
+                                int currenthIndex = -1;
 
-                                    currentRow.GetCell(currenthIndex).SetParagraph(NpoiWordParagraphTextStyleHelper._.SetTableParagraphInstanceSetting(document, firstXwpfTable, GetStringValue(valuep), ParagraphAlignment.CENTER, 22, true));
+                                foreach (var pv in (valueItem as IDictionary<string, object>).Keys)
+                                {
+                                    var headerReg = new Regex(@"\$" + pv + @"(\[\w+\])?\$");
+                                    var currenth = headers.FirstOrDefault(c => headerReg.IsMatch(c.GetText().Trim()));
+                                    if (currenth != null)
+                                    {
+                                        currenthIndex = headers.IndexOf(currenth);
+                                        var valuep = (valueItem as IDictionary<string, object>)[pv];
+
+                                        currentRow.GetCell(currenthIndex).SetParagraph(NpoiWordParagraphTextStyleHelper._.SetTableParagraphInstanceSetting(document, firstXwpfTable, GetStringValue(valuep), ParagraphAlignment.CENTER, 22, true));
 
 
+                                    }
+                                }
+
+                            }
+                            else
+                            {
+                                var currentRow = firstXwpfTable.InsertNewTableRow(startRow + index);
+
+                                var headers = firstXwpfTable.GetRow(startRow).GetTableCells();
+                                foreach (var item in headers)
+                                {
+                                    currentRow.CreateCell();
+                                }
+
+                                Type tv = valueItem.GetType();
+                                PropertyInfo[] piv = tv.GetProperties();
+                                int currenthIndex = -1;
+                                foreach (PropertyInfo pv in piv)
+                                {
+                                    var headerReg = new Regex(@"\$" + pv.Name + @"(\[\w+\])?\$");
+                                    var currenth = headers.FirstOrDefault(c => headerReg.IsMatch(c.GetText().Trim()));
+                                    if (currenth != null)
+                                    {
+                                        currenthIndex = headers.IndexOf(currenth);
+                                        var valuep = pv.GetValue(valueItem, null);
+
+                                        currentRow.GetCell(currenthIndex).SetParagraph(NpoiWordParagraphTextStyleHelper._.SetTableParagraphInstanceSetting(document, firstXwpfTable, GetStringValue(valuep), ParagraphAlignment.CENTER, 22, true));
+
+
+                                    }
                                 }
                             }
+
                         }
+                        index++;
                     }
-                    firstXwpfTable.RemoveRow(1);
+
+
+                    firstXwpfTable.RemoveRow(startRow);
 
                 }
             }

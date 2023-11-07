@@ -15,6 +15,14 @@ namespace Word.Test
 
         private static readonly string outputPath_Doc = new FileInfo(Assembly.GetExecutingAssembly().Location).Directory.FullName;
 
+        //可以自定义目标文件的路径
+        //private static readonly string outputPath_Doc = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+
+
+
+        /// <summary>
+        /// 测试：心电报告
+        /// </summary>
         [TestMethod]
         public void TestMethod1()
         {
@@ -38,7 +46,9 @@ namespace Word.Test
 
         }
 
-
+        /// <summary>
+        /// 测试：处方笺
+        /// </summary>
         [TestMethod]
         public void TestMethod2()
         {
@@ -62,6 +72,9 @@ namespace Word.Test
 
         }
 
+        /// <summary>
+        /// 测试：员工健康信息报告
+        /// </summary>
         [TestMethod]
         public void TestMethod3()
         {
@@ -82,6 +95,128 @@ namespace Word.Test
 
 
             File.WriteAllBytes(Path.Combine(outputPath_Doc, $"Report2.docx"), docFileContent);
+
+
+        }
+
+
+        /// <summary>
+        /// 测试：工资登记表
+        /// </summary>
+
+        [TestMethod]
+        public void TestMethod4()
+        {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            Console.WriteLine("Generator begin");
+            byte[] docFileContent;
+
+            var docinfo = new
+            {
+
+                Dept = "研发部",
+                Date = DateTime.Now,
+                Details = new List<dynamic>() {
+
+                  new
+                  {
+                      Number = "mk201406gz324",
+                    Name = "张三",
+                    BaseAccount = 2000,
+                    TechnicalAllowance = 1500,
+                    SeniorityAllowance = 700,
+                    DutyAllowance = 300,
+                    JobAllowance = 200,
+                    ItemSum = 4700
+                }
+,
+new
+{
+                Number = "mk201406gz325",
+                      Name = "李四",
+                      BaseAccount = 2500,
+                      TechnicalAllowance = 2000,
+                      SeniorityAllowance = 800,
+                      DutyAllowance = 350,
+                      JobAllowance = 250,
+                      ItemSum = 5800
+                  }
+            ,
+            new
+{
+                Number = "mk201406gz326",
+                      Name = "王五",
+                      BaseAccount = 1800,
+                      TechnicalAllowance = 1200,
+                      SeniorityAllowance = 600,
+                      DutyAllowance = 300,
+                      JobAllowance = 200,
+                      ItemSum = 4900
+                  }
+            ,
+            new
+{
+                Number = "mk201406gz327",
+                      Name = "赵六",
+                      BaseAccount = 2200,
+                      TechnicalAllowance = 1600,
+                      SeniorityAllowance = 750,
+                      DutyAllowance = 350,
+                      JobAllowance = 250,
+                      ItemSum = 5650
+                  }
+            ,
+            new
+{
+                Number = "mk201406gz328",
+                      Name = "孙七",
+                      BaseAccount = 1950,
+                      TechnicalAllowance = 1350,
+                      SeniorityAllowance = 650,
+                      DutyAllowance = 325,
+                      JobAllowance = 225,
+                      ItemSum = 5550
+                  }
+            ,
+            new
+{
+                Number = "mk201406gz329",
+                      Name = "周八",
+                      BaseAccount = 2350,
+                      TechnicalAllowance = 1750,
+                      SeniorityAllowance = 850,
+                      DutyAllowance = 375,
+                      JobAllowance = 275,
+                      ItemSum = 6450
+                  }
+
+        },
+                DeptorSum = 50000,
+                LenderSum = 50000,
+                //12800   9400    4350    2000    1400    33050
+
+                Sum1=12800,
+                Sum2= 9400,
+                Sum3= 4350,
+                Sum4= 2000,
+                Sum5= 1400,
+                Sum = 33050,
+                Auditor = "王五",
+                Register = "赵六",
+
+            };
+            var ext = ".docx";
+            var result = Word.Exporter.ExportDocxByObject(Path.Combine(templatePath_Doc, $"SalaryTemplate.docx"), docinfo, (s) => s);
+
+            using (var memoryStream = new MemoryStream())
+            {
+                result.Write(memoryStream);
+                memoryStream.Seek(0, SeekOrigin.Begin);
+                docFileContent = memoryStream.ToArray();
+            }
+
+
+            File.WriteAllBytes(Path.Combine(outputPath_Doc, $"Salary.docx"), docFileContent);
 
 
         }
