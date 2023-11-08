@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <Nullable>enable</Nullable>
+	  <Authors>LinXiao</Authors>
+	  <Company>MatoApp</Company>
+	  <Copyright>Copyright ©  2023</Copyright>
+	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
+	  <RepositoryUrl>https://github.com/jevonsflash/DocTemplateTool</RepositoryUrl>
+	  <Description>Specify a template to generate word or Pdf files</Description>
+	  <PackageReadmeFile>README.md</PackageReadmeFile>
+
+  </PropertyGroup>
+	<ItemGroup>
+		<None Include="..\README.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
+	<ItemGroup>
+	  <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+	</ItemGroup>
+
+</Project>

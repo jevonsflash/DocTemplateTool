@@ -1,4 +1,4 @@
-﻿using DocTemplateTool.Helper;
+﻿using DocTemplateTool.Common.Helper;
 using DocTemplateTool.Word.Helper;
 using Flurl.Http;
 using NPOI.POIFS.Crypt;

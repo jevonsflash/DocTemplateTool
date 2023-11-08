@@ -1,6 +1,6 @@
 ﻿
 using System.Diagnostics;
-using DocTemplateTool.Helper;
+using DocTemplateTool.Common.Helper;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using NPOI.XWPF.UserModel;
@@ -23,31 +23,28 @@ namespace DocTemplateTool
             {
 
                 var sw = Stopwatch.StartNew();
-                XWPFDocument output = null;
+                IDictionary<string, object> docinfo = null;
                 if (CliProcessor.source == "json")
                 {
                     var docinfoJson = DirFileHelper.ReadFile(CliProcessor.objectFilePath);
-
-                    var docinfo = CommonHelper.ToCollections(JObject.Parse(docinfoJson)) as IDictionary<string, object>;
-
-                    output =  DocProcessor.ImportFrom(CliProcessor.inputPathList.First(), docinfo);
+                    docinfo = CommonHelper.ToCollections(JObject.Parse(docinfoJson)) as IDictionary<string, object>;
                 }
                 else
                 {
                 }
-    
-
-           
 
                 if (CliProcessor.destination == "word")
                 {
-              
-                    DocProcessor.SaveTo(output, CliProcessor.outputPathList.First());
+                    var output = WordDocProcessor.ImportFrom(CliProcessor.inputPathList.First(), docinfo);
+                    WordDocProcessor.SaveTo(output, CliProcessor.outputPathList.First());
                     Console.WriteLine("已成功完成");
-
                 }
-                else
+                else if (CliProcessor.destination == "pdf")
                 {
+
+                    var output = PdfDocProcessor.ImportFrom(CliProcessor.inputPathList.First(), docinfo);
+                    PdfDocProcessor.SaveTo(output, CliProcessor.outputPathList.First());
+                    Console.WriteLine("已成功完成");
                 }
 
                 sw.Stop();

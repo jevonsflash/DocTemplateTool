@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace DocTemplateTool.Helper
+namespace DocTemplateTool.Common.Helper
 {
 
     /// <summary>

@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+	  <Version>0.1.0</Version>
+	  <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
+	  <ImplicitUsings>enable</ImplicitUsings>
+	  <Authors>LinXiao</Authors>
+	  <Company>MatoApp</Company>
+	  <Copyright>Copyright ©  2023</Copyright>
+	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
+	  <RepositoryUrl>https://github.com/jevonsflash/DocTemplateTool</RepositoryUrl>
+	  <Description>Specify a template to generate word or Pdf files</Description>
+	  <PackageReadmeFile>README.md</PackageReadmeFile>
+	  <Nullable>enable</Nullable>
+  </PropertyGroup>
+	<ItemGroup>
+		<None Include="..\README.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Flurl.Http" Version="3.2.4" />
+    <PackageReference Include="PdfSharpCore" Version="1.3.62" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DocTemplateTool.Common\DocTemplateTool.Common.csproj" />
+  </ItemGroup>
+
+</Project>

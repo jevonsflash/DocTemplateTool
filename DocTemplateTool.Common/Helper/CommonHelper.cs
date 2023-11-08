@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
-namespace DocTemplateTool.Helper
+namespace DocTemplateTool.Common.Helper
 {
     public class CommonHelper
     {

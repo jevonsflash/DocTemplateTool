@@ -1,10 +1,11 @@
 using System.Reflection;
 using System.Text;
 using DocTemplateTool.Common.Helper;
+using DocTemplateTool.Word;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace DocTemplateTool.Word.Test
+namespace DocTemplateTool.Pdf.Test
 {
     [TestClass]
     public class UnitTest2
@@ -60,7 +61,7 @@ namespace DocTemplateTool.Word.Test
                 { "Register",  "ÕÔÁù"     },
             };
 
-            var result = Word.Exporter.ExportDocxByDictionary(Path.Combine(templatePath_Doc, $"AccountingTemplate.docx"), docinfo, (s) => s);
+            var result = Exporter.ExportDocxByDictionary(Path.Combine(templatePath_Doc, $"AccountingTemplate.docx"), docinfo, (s) => s);
 
             using (var memoryStream = new MemoryStream())
             {
@@ -85,7 +86,7 @@ namespace DocTemplateTool.Word.Test
             var docinfo = CommonHelper.ToCollections(JObject.Parse(docinfoJson)) as IDictionary<string, object>;
 
 
-            var result = Word.Exporter.ExportDocxByDictionary(Path.Combine(templatePath_Doc, $"AccountingTemplate.docx"), docinfo, (s) => s);
+            var result = Exporter.ExportDocxByDictionary(Path.Combine(templatePath_Doc, $"AccountingTemplate.docx"), docinfo, (s) => s);
 
             using (var memoryStream = new MemoryStream())
             {
@@ -145,7 +146,7 @@ namespace DocTemplateTool.Word.Test
                 Register = "ÕÔÁù",
             };
 
-            var result = Word.Exporter.ExportDocxByObject(Path.Combine(templatePath_Doc, $"AccountingTemplate.docx"), docinfo, (s) => s);
+            var result = Exporter.ExportDocxByObject(Path.Combine(templatePath_Doc, $"AccountingTemplate.docx"), docinfo, (s) => s);
 
             using (var memoryStream = new MemoryStream())
             {
@@ -200,7 +201,7 @@ namespace DocTemplateTool.Word.Test
                 "ÕÔÁù"
             );
 
-            var result = Word.Exporter.ExportDocxByObject(Path.Combine(templatePath_Doc, $"AccountingTemplate.docx"), docinfo, (s) => s);
+            var result = Exporter.ExportDocxByObject(Path.Combine(templatePath_Doc, $"AccountingTemplate.docx"), docinfo, (s) => s);
 
             using (var memoryStream = new MemoryStream())
             {

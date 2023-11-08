@@ -29,6 +29,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\DocTemplateTool.Pdf\DocTemplateTool.Pdf.csproj" />
 		<ProjectReference Include="..\DocTemplateTool.Word\DocTemplateTool.Word.csproj" />
 	</ItemGroup>
 

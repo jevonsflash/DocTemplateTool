@@ -12,7 +12,7 @@ using Org.BouncyCastle.Utilities;
 
 namespace DocTemplateTool
 {
-    public class DocProcessor
+    public class WordDocProcessor
     {
 
         public static void SaveTo(XWPFDocument result, string filePath)

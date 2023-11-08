@@ -25,4 +25,9 @@
 		<PackageReference Include="sautinsoft.useoffice" Version="5.1.2.24" />
 	</ItemGroup>
 
+
+	<ItemGroup>
+	  <ProjectReference Include="..\DocTemplateTool.Common\DocTemplateTool.Common.csproj" />
+	</ItemGroup>
+
 </Project>
