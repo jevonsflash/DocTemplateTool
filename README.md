@@ -78,6 +78,27 @@ File.WriteAllBytes("D:\\Result.docx", docFileContent);
 ```
 
 
+### 使用DocTemplateTool.Pdf类库
+
+在项目中引用[DocTemplateTool.Pdf]( https://www.nuget.org/packages/DocTemplateTool.Pdf)
+
+
+```
+dotnet add package DocTemplateTool.Pdf
+```
+
+
+
+由于Exporter返回的PdfSharp.PdfDocument对象，你需要自行根据业务来处理结果，以及处理IO异常
+
+```
+var docinfo = GetDocInfo(); // 准备数据
+var result = Exporter.ExportDocxByObject("D:\\Template.docx", docinfo);
+//处理结果
+result.Save("D:\\Result.docx");
+```
+
+
 ## 占位符
 
 占位符是指在模板中的一个标记，用于标记需要替换的文本或图片，
@@ -131,7 +152,7 @@ Exporter将扫描文档中所有占位符，然后根据占位符的名称，从
 
 ## 数据集合
 
-由于NPOI限制，暂不支持表格的嵌套。
+暂不支持表格的嵌套。
 数据集合将以表格的形式呈现在文档中，因此你需要在模板中预留一个表格，Exporter将根据表中单元格的占位符，填充表格各列的内容。
 包含占位符的行称之为模板行。
 
